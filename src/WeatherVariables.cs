@@ -79,9 +79,36 @@ internal static class WeatherVariables
         if (levels == null)
             return false;
 
+        // Vanilla moons first, and only then anything a mod added. Every player has the vanilla list
+        // in the same order, so host and clients pick the same donor and end up with the same flood
+        // height and fog density — a preference for whatever came first would hand different numbers
+        // to players whose moon mods differ.
+        if (TryScan(levels, type, exclude, vanillaOnly: true, out donor)
+            || TryScan(levels, type, exclude, vanillaOnly: false, out donor))
+        {
+            Cache[type] = donor;
+            return true;
+        }
+
+        Cache[type] = default;
+        return false;
+    }
+
+    private static bool TryScan(
+        SelectableLevel[] levels,
+        LevelWeatherType type,
+        SelectableLevel exclude,
+        bool vanillaOnly,
+        out Variables donor)
+    {
+        donor = default;
+
         foreach (SelectableLevel level in levels)
         {
             if (level == null || level == exclude || level.randomWeathers == null)
+                continue;
+
+            if (vanillaOnly && !IsVanilla(level))
                 continue;
 
             foreach (RandomWeatherWithVariables candidate in level.randomWeathers)
@@ -101,12 +128,23 @@ internal static class WeatherVariables
                     Source = level.PlanetName ?? level.name,
                 };
 
-                Cache[type] = donor;
                 return true;
             }
         }
 
-        Cache[type] = default;
         return false;
+    }
+
+    private static bool IsVanilla(SelectableLevel level)
+    {
+        try
+        {
+            return MrovLib.LevelHelper.IsVanillaLevel(level);
+        }
+        catch
+        {
+            // Without MrovLib's judgement every moon is a candidate; the second scan covers it.
+            return false;
+        }
     }
 }

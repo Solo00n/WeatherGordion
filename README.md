@@ -4,7 +4,7 @@
 
 ![Lethal Company](https://img.shields.io/badge/Lethal%20Company-V81-cc0000?style=flat-square)
 ![BepInEx](https://img.shields.io/badge/BepInEx-5.4.21%2B-cc0000?style=flat-square)
-![Version](https://img.shields.io/badge/version-1.0.3-cc0000?style=flat-square)
+![Version](https://img.shields.io/badge/version-1.0.4-cc0000?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-cc0000?style=flat-square)
 
 **Language / Язык:** [English](#english) · [Русский](#russian)
@@ -56,6 +56,10 @@ Nothing here gives a player an edge, and nothing here invents its own netcode. E
 **Computed locally, but from inputs everyone shares**
 
 The clock is started on each machine that has the mod, from the same server-synced `globalTime`. The day offset is set to a flat zero rather than to anything captured at landing — a value derived from the local clock would be taken at whatever moment each machine noticed the ship had landed, and every player would end up on a slightly different time of day. Same inputs, same arithmetic, same time on every screen.
+
+The weather pool is built on every machine, not just the host, and that is deliberate. WeatherRegistry syncs the *choice* of weather but not the numbers behind it: each client runs `RoundManager.SetToCurrentLevelWeather` from its own level generation and copies `weatherVariable`/`weatherVariable2` out of its own pool entry. A client whose Gordion pool was empty would find no entry, keep whatever those fields held before, and get the flood at a different height and the fog at a different density than the host — the same weather, a different world. The pool is therefore rebuilt immediately before that read, on every player, on every landing.
+
+For the same reason the variables are borrowed from a vanilla moon in preference to a modded one. Everyone has the vanilla moon list in the same order, so host and clients settle on the same donor even when their moon mods differ.
 
 **Playing with someone who does not have the mod**
 
@@ -181,6 +185,10 @@ dotnet build -c Release
 **Считается локально, но из общих для всех данных**
 
 Часы запускаются на каждой машине с модом, но от одного и того же серверного `globalTime`. Смещение дня выставляется в ноль, а не в значение, снятое при посадке: величина, взятая от локальных часов, фиксировалась бы в тот момент, когда конкретная машина заметила посадку, и у каждого игрока было бы своё время суток. Одинаковые входные данные, одинаковая арифметика, одинаковое время на всех экранах.
+
+Пул погод собирается на каждой машине, а не только на хосте, и это сделано намеренно. WeatherRegistry синхронизирует *выбор* погоды, но не числа за ним: каждый клиент вызывает `RoundManager.SetToCurrentLevelWeather` из своей генерации уровня и копирует `weatherVariable`/`weatherVariable2` из своей же записи пула. Клиент с пустым пулом Гордиона не нашёл бы записи, оставил бы в этих полях прежние значения и получил бы воду на другой высоте, а туман — другой плотности, чем у хоста: погода та же, мир разный. Поэтому пул пересобирается прямо перед этим чтением, у каждого игрока, при каждой посадке.
+
+По той же причине переменные заимствуются в первую очередь у ванильной луны, а не у модовой. Ванильный список лун одинаков и в одном порядке у всех, поэтому хост и клиенты выбирают один и тот же источник даже при разном наборе модов на луны.
 
 **Если у кого-то мода нет**
 

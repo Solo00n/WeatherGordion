@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.4
+
+- **Clients could have got the same weather with different numbers.** WeatherRegistry syncs which
+  weather a moon gets, but not the values behind it: every client runs
+  `RoundManager.SetToCurrentLevelWeather` from its own level generation and reads
+  `weatherVariable`/`weatherVariable2` out of its own pool entry. On a client the pool was only being
+  built when they joined the lobby, so anyone who missed that window would have found no Gordion
+  entry, kept whatever those fields held before, and seen the flood at a different height and the fog
+  at a different density than the host. The pool is now rebuilt immediately before that read, on every
+  player, on every landing.
+- Weather variables are borrowed from a vanilla moon in preference to a modded one, so host and
+  clients settle on the same donor even when their moon mods differ.
+
 ## 1.0.3
 
 - **Multiplayer: every player now gets the same time of day.** The day offset was being set from the
