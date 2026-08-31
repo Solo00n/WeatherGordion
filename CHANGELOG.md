@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.5
+
+- Config sections renumbered `1. General`, `2. Weathers`, `3. Time`. The gap where a scrap section
+  used to be looked like something had gone missing. Done now, before release, because renaming a
+  section later would leave everyone's settings behind in the old one.
+
 ## 1.0.4
 
 - **Clients could have got the same weather with different numbers.** WeatherRegistry syncs which

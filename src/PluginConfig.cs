@@ -83,7 +83,7 @@ internal sealed class PluginConfig
         // there. See the README for why that stays invisible in practice.
 
         TimeMode = cfg.Bind(
-            "4. Time", "Gordion time mode", GordionTimeMode.RealTime,
+            "3. Time", "Gordion time mode", GordionTimeMode.RealTime,
             "Off       - no day cycle; weather is fixed for the whole visit (vanilla behaviour).\n" +
             "RealTime  - start the game's own clock on Gordion while landed, so progressing weather, " +
             "the rising Flooded water and the HUD clock all work. planetHasTime is deliberately left " +
@@ -93,13 +93,13 @@ internal sealed class PluginConfig
             "from this mod's own timer instead. Use it if RealTime upsets another mod.");
 
         FreezeDeadline = cfg.Bind(
-            "4. Time", "Freeze deadline on Gordion", true,
+            "3. Time", "Freeze deadline on Gordion", true,
             "RealTime only. The vanilla clock drains the quota deadline as it runs, which on Gordion " +
             "would both cost you days and move the company buying rate — neither happens in vanilla, " +
             "where the clock is stopped. Leave this on to hold the deadline still for the visit.");
 
         ShipLeavesAtEndOfDay = cfg.Bind(
-            "4. Time", "Ship leaves at end of day", true,
+            "3. Time", "Ship leaves at end of day", true,
             "RealTime only. Let the ship fly off on its own when the Gordion day runs out, exactly as " +
             "it does on every other moon, with the usual warning at 90% of the day. Vanilla cannot do " +
             "this at the Company because the whole midnight-departure branch sits behind planetHasTime, " +
@@ -107,13 +107,13 @@ internal sealed class PluginConfig
             "manual and never risk being cut off mid-sale.");
 
         ShowClock = cfg.Bind(
-            "4. Time", "Show clock on Gordion", true,
+            "3. Time", "Show clock on Gordion", true,
             "Show the HUD clock while on Gordion, indoors included. Vanilla hides the clock whenever " +
             "you count as inside, which at the Company is most of the visit, so the mod asserts it " +
             "instead. Works in both RealTime and Simulated.");
 
         DayLengthSeconds = cfg.Bind(
-            "4. Time", "Day length seconds", 1200f,
+            "3. Time", "Day length seconds", 1200f,
             new ConfigDescription(
                 "Simulated only: real seconds for a full Gordion day, i.e. how long progressing weather " +
                 "takes to run through all of its stages.",

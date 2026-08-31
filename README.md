@@ -4,7 +4,7 @@
 
 ![Lethal Company](https://img.shields.io/badge/Lethal%20Company-V81-cc0000?style=flat-square)
 ![BepInEx](https://img.shields.io/badge/BepInEx-5.4.21%2B-cc0000?style=flat-square)
-![Version](https://img.shields.io/badge/version-1.0.4-cc0000?style=flat-square)
+![Version](https://img.shields.io/badge/version-1.0.5-cc0000?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-cc0000?style=flat-square)
 
 **Language / Язык:** [English](#english) · [Русский](#russian)
@@ -87,11 +87,11 @@ Install through a mod manager, or drop `WeatherGordion.dll` into `BepInEx/plugin
 | 2. Weathers | `Weather weights` | see below | `Name@Weight` pairs, semicolon separated. Weight 0 removes a weather this mod added. |
 | 2. Weathers | `Clear weather weight` | `200` | How often Gordion stays clear. 0 guarantees weather every visit. |
 | 2. Weathers | `Respect existing config` | `true` | Skip weathers you already gave a Gordion weight by hand. |
-| 4. Time | `Gordion time mode` | `RealTime` | `Off`, `RealTime` or `Simulated`. |
-| 4. Time | `Freeze deadline on Gordion` | `true` | Hold the quota deadline still while the clock runs. |
-| 4. Time | `Ship leaves at end of day` | `true` | RealTime only. Ship departs at midnight, with the usual 90% warning. |
-| 4. Time | `Show clock on Gordion` | `true` | Show the HUD clock during the visit, indoors included. |
-| 4. Time | `Day length seconds` | `1200` | Simulated only: real seconds per Gordion day. |
+| 3. Time | `Gordion time mode` | `RealTime` | `Off`, `RealTime` or `Simulated`. |
+| 3. Time | `Freeze deadline on Gordion` | `true` | Hold the quota deadline still while the clock runs. |
+| 3. Time | `Ship leaves at end of day` | `true` | RealTime only. Ship departs at midnight, with the usual 90% warning. |
+| 3. Time | `Show clock on Gordion` | `true` | Show the HUD clock during the visit, indoors included. |
+| 3. Time | `Day length seconds` | `1200` | Simulated only: real seconds per Gordion day. |
 
 Default weather line:
 
@@ -216,11 +216,11 @@ dotnet build -c Release
 | 2. Weathers | `Weather weights` | см. ниже | Пары `Имя@Вес` через точку с запятой. Вес 0 убирает погоду, добавленную этим модом. |
 | 2. Weathers | `Clear weather weight` | `200` | Как часто на Гордионе остаётся ясно. 0 — погода гарантирована каждый визит. |
 | 2. Weathers | `Respect existing config` | `true` | Не трогать погоды, которым вы уже задали вес для Гордиона вручную. |
-| 4. Time | `Gordion time mode` | `RealTime` | `Off`, `RealTime` или `Simulated`. |
-| 4. Time | `Freeze deadline on Gordion` | `true` | Удерживать дедлайн квоты, пока идут часы. |
-| 4. Time | `Ship leaves at end of day` | `true` | Только RealTime. Корабль улетает в полночь, с обычным предупреждением на 90% дня. |
-| 4. Time | `Show clock on Gordion` | `true` | Показывать часы в HUD во время визита, в том числе в помещении. |
-| 4. Time | `Day length seconds` | `1200` | Только Simulated: реальных секунд на сутки Гордиона. |
+| 3. Time | `Gordion time mode` | `RealTime` | `Off`, `RealTime` или `Simulated`. |
+| 3. Time | `Freeze deadline on Gordion` | `true` | Удерживать дедлайн квоты, пока идут часы. |
+| 3. Time | `Ship leaves at end of day` | `true` | Только RealTime. Корабль улетает в полночь, с обычным предупреждением на 90% дня. |
+| 3. Time | `Show clock on Gordion` | `true` | Показывать часы в HUD во время визита, в том числе в помещении. |
+| 3. Time | `Day length seconds` | `1200` | Только Simulated: реальных секунд на сутки Гордиона. |
 
 Строка погод по умолчанию:
 

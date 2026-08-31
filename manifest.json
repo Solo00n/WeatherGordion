@@ -1,6 +1,6 @@
 {
   "name": "WeatherGordion",
-  "version_number": "1.0.4",
+  "version_number": "1.0.5",
   "website_url": "https://github.com/Solo00n/WeatherGordion",
   "description": "Weather on 71-Gordion: rain, fog, storms and combined weathers at the Company, with configurable weights and a day that actually passes.",
   "dependencies": [
