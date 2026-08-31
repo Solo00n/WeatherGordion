@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>WeatherGordion</AssemblyName>
+    <RootNamespace>WeatherGordion</RootNamespace>
+    <Product>WeatherGordion</Product>
+    <Version>1.0.3</Version>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- BepInEx.PluginInfoProps generates MyPluginInfo from these -->
+    <BepInExPluginGuid>Timofey.WeatherGordion</BepInExPluginGuid>
+    <BepInExPluginName>WeatherGordion</BepInExPluginName>
+    <BepInExPluginVersion>1.0.3</BepInExPluginVersion>
+  </PropertyGroup>
+
+  <!-- Thunderstore profile the mod is developed against. Every hard-referenced
+       modded assembly is taken from here, so a profile update is a one-line change. -->
+  <PropertyGroup>
+    <LcProfile Condition="'$(LcProfile)' == ''">$(APPDATA)\Thunderstore Mod Manager\DataFolder\LethalCompany\profiles\HARDMODEv81_INVDEV</LcProfile>
+    <LcPlugins>$(LcProfile)\BepInEx\plugins</LcPlugins>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BepInEx.Core" Version="5.4.21" PrivateAssets="all" />
+    <PackageReference Include="BepInEx.PluginInfoProps" Version="2.1.0" PrivateAssets="all" />
+    <!-- Stripped + publicized game assemblies (Assembly-CSharp, Unity modules, Netcode).
+         The version tracks the game build; "*-*" always pulls the newest published set. -->
+    <PackageReference Include="LethalCompany.GameLibs.Steam" Version="*-*" PrivateAssets="all" />
+    <!-- Weather API. MrovLib is NOT pulled in by this package, hence the direct reference below. -->
+    <PackageReference Include="mrov.WeatherRegistry" Version="0.8.8" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="MrovLib" Private="false">
+      <HintPath>$(LcPlugins)\mrov-MrovLib\MrovLib.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <!-- WeatherTweaks and Combined Weathers Toolkit are deliberately NOT referenced:
+       they are reached through reflection (src/Compat) so the mod loads and works
+       when they are absent or on a different version. -->
+
+  <!-- Optional: copy the built DLL straight into the game's plugin folder.
+       Set the LC_PLUGINS env var (or edit the path) to enable. -->
+  <Target Name="CopyToGame" AfterTargets="Build" Condition="'$(LC_PLUGINS)' != ''">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(LC_PLUGINS)" />
+  </Target>
+
+</Project>
