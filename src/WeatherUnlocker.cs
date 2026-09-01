@@ -128,31 +128,28 @@ internal static class WeatherUnlocker
 
         TakeSnapshot(gordion, weathers);
 
-        Dictionary<string, int> wanted = Plugin.Cfg.WeatherWeightMap();
         var applied = new List<string>();
-        var missing = new List<string>(wanted.Keys);
+        var disabled = new List<string>();
 
         foreach (Weather weather in weathers)
         {
             if (weather == null)
                 continue;
 
-            string key = MatchKey(weather, wanted);
-            if (key == null)
+            // Clear weather gets no switch: the selection always offers it, so all it needs is the
+            // weight that decides how often Gordion simply stays as it is.
+            if (weather.Type == WeatherType.Clear)
             {
-                // Clear weather is never named in the config: the selection always offers it, so all it
-                // needs is the weight that decides how often Gordion stays as it is.
-                if (weather.Type == WeatherType.Clear)
-                    SetLevelWeight(weather, gordion, Plugin.Cfg.ClearWeatherWeight.Value);
+                SetLevelWeight(weather, gordion, Plugin.Cfg.ClearWeatherWeight.Value);
                 continue;
             }
 
-            missing.Remove(key);
-            int weight = wanted[key];
+            int weight = Plugin.Cfg.SettingsFor(weather.Name).EffectiveWeight;
 
             if (weight == 0)
             {
                 RemoveFromPool(gordion, weather);
+                disabled.Add(weather.Name);
                 continue;
             }
 
@@ -178,36 +175,9 @@ internal static class WeatherUnlocker
                 $"Gordion weather pool ({reason}): {(applied.Count > 0 ? string.Join(", ", applied) : "nothing")}" +
                 $"; clear weight {Plugin.Cfg.ClearWeatherWeight.Value}.");
 
-            if (missing.Count > 0)
-            {
-                Plugin.Log.LogWarning(
-                    $"These configured weathers are not registered and were skipped: {string.Join(", ", missing)}. " +
-                    "Check the section titles in mrov.WeatherRegistry.cfg for the exact names — combined " +
-                    "weathers only exist while WeatherTweaks or Combined Weathers Toolkit is installed.");
-            }
+            if (disabled.Count > 0)
+                Plugin.DebugLog($"Switched off for Gordion: {string.Join(", ", disabled)}.");
         }
-    }
-
-    /// <summary>Config key matching this weather, or null when the config does not mention it.</summary>
-    private static string MatchKey(Weather weather, Dictionary<string, int> wanted)
-    {
-        string byName = PluginConfig.NormalizeName(weather.Name);
-        if (wanted.ContainsKey(byName))
-            return byName;
-
-        // WeatherRegistry's own terminal-friendly spelling, e.g. "Stormy + Rainy" -> "stormy+rainy".
-        try
-        {
-            string alphanumeric = PluginConfig.NormalizeName(weather.GetAlphanumericName());
-            if (alphanumeric.Length > 0 && wanted.ContainsKey(alphanumeric))
-                return alphanumeric;
-        }
-        catch
-        {
-            // Older/newer WeatherRegistry without the helper; the name match above is enough.
-        }
-
-        return null;
     }
 
     // ---------------------------------------------------------------- level filter

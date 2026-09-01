@@ -24,14 +24,48 @@ internal enum GordionTimeMode
     Simulated,
 }
 
+/// <summary>Per-weather switch and weight, bound under its own <c>[Weather.Name]</c> section.</summary>
+internal sealed class WeatherSettings
+{
+    public ConfigEntry<bool> Enabled;
+    public ConfigEntry<int> Weight;
+
+    /// <summary>Weight to apply, or 0 when this weather should not happen on Gordion at all.</summary>
+    public int EffectiveWeight => Enabled.Value ? Weight.Value : 0;
+}
+
 internal sealed class PluginConfig
 {
+    /// <summary>
+    /// Starting weights for the weathers that ship with the game. Anything not listed here — a modded
+    /// weather, or a combination registered by WeatherTweaks or Combined Weathers Toolkit — is bound
+    /// switched off, so installing a weather pack never quietly changes what happens at the Company.
+    /// </summary>
+    private static readonly Dictionary<string, int> DefaultWeights = new Dictionary<string, int>
+    {
+        ["rainy"] = 120,
+        ["foggy"] = 100,
+        ["stormy"] = 60,
+        ["eclipsed"] = 50,
+        ["flooded"] = 40,
+        ["dustclouds"] = 60,
+    };
+
+    /// <summary>Vanilla weathers that are on out of the box. Dust Clouds is bound off by request.</summary>
+    private static readonly HashSet<string> EnabledByDefault = new HashSet<string>
+    {
+        "rainy", "foggy", "stormy", "eclipsed", "flooded",
+    };
+
+    private readonly ConfigFile _file;
+    private readonly Dictionary<string, WeatherSettings> _weatherSettings =
+        new Dictionary<string, WeatherSettings>(StringComparer.Ordinal);
+
     // [General]
     public readonly ConfigEntry<bool> Enabled;
     public readonly ConfigEntry<bool> DebugMode;
 
     // [Weathers]
-    public readonly ConfigEntry<string> WeatherWeights;
     public readonly ConfigEntry<int> ClearWeatherWeight;
     public readonly ConfigEntry<bool> RespectExistingConfig;
 
@@ -42,12 +76,10 @@ internal sealed class PluginConfig
     public readonly ConfigEntry<bool> ShowClock;
     public readonly ConfigEntry<float> DayLengthSeconds;
 
-    /// <summary>Parsed <see cref="WeatherWeights"/>, rebuilt whenever the raw string changes.</summary>
-    private Dictionary<string, int> _weights;
-    private string _weightsSource;
-
     public PluginConfig(ConfigFile cfg)
     {
+        _file = cfg;
+
         Enabled = cfg.Bind(
             "1. General", "Enabled", true,
             "Master switch. When off the plugin changes nothing and Gordion stays clear.");
@@ -55,15 +87,6 @@ internal sealed class PluginConfig
         DebugMode = cfg.Bind(
             "1. General", "DebugMode", false,
             "Verbose logging: which weathers were unlocked, weights written, time transitions.");
-
-        WeatherWeights = cfg.Bind(
-            "2. Weathers", "Weather weights",
-            "Rainy@120; Foggy@100; Stormy@60; Flooded@40; Eclipsed@50",
-            "Weathers allowed on Gordion and how likely each one is, written as Name@Weight and " +
-            "separated by semicolons. Names are the ones WeatherRegistry uses for its config section " +
-            "titles, so combined and progressing weathers work too: Stormy + Rainy@40; Eclipsed > Foggy@20. " +
-            "Weight 0 removes a weather this mod added earlier. Weights are relative to each other and " +
-            "to 'Clear weather weight'.");
 
         ClearWeatherWeight = cfg.Bind(
             "2. Weathers", "Clear weather weight", 200,
@@ -121,54 +144,63 @@ internal sealed class PluginConfig
     }
 
     /// <summary>
-    /// Configured weathers as name -> weight. Keys are normalised with <see cref="NormalizeName"/>,
-    /// so "Stormy + Rainy", "stormy+rainy" and "STORMY  +  RAINY" all land on the same entry.
+    /// The switch and weight for one weather, binding its <c>[Weather.Name]</c> section the first time
+    /// it is asked for.
+    ///
+    /// Binding is deferred rather than done in the constructor because the weather list does not exist
+    /// yet at that point: WeatherRegistry registers vanilla weathers, and WeatherTweaks and Combined
+    /// Weathers Toolkit register their combinations, well after plugins load. The sections therefore
+    /// appear in the file once the game has reached the point where those are known — the same way
+    /// WeatherRegistry's own per-weather sections do.
     /// </summary>
-    public Dictionary<string, int> WeatherWeightMap()
+    public WeatherSettings SettingsFor(string weatherName)
     {
-        string raw = WeatherWeights.Value ?? string.Empty;
-        if (_weights != null && _weightsSource == raw)
-            return _weights;
+        string key = NormalizeName(weatherName);
+        if (_weatherSettings.TryGetValue(key, out WeatherSettings existing))
+            return existing;
 
-        var parsed = new Dictionary<string, int>(StringComparer.Ordinal);
+        string section = "Weather." + SanitizeForConfig(weatherName);
+        bool defaultEnabled = EnabledByDefault.Contains(key);
+        int defaultWeight = DefaultWeights.TryGetValue(key, out int w) ? w : 100;
 
-        foreach (string chunk in raw.Split(';'))
+        var settings = new WeatherSettings
         {
-            string entry = chunk.Trim();
-            if (entry.Length == 0)
+            Enabled = _file.Bind(
+                section, "Enabled", defaultEnabled,
+                $"Whether '{weatherName}' can happen on Gordion at all. Turning it off takes it back " +
+                "out of the moon's weather pool; nothing else on the moon is affected."),
+
+            Weight = _file.Bind(
+                section, "Weight", defaultWeight,
+                new ConfigDescription(
+                    $"How likely '{weatherName}' is on Gordion, relative to the other weathers here and " +
+                    "to 'Clear weather weight'. Ignored while Enabled is false.",
+                    new AcceptableValueRange<int>(0, 10000))),
+        };
+
+        _weatherSettings[key] = settings;
+        return settings;
+    }
+
+    /// <summary>
+    /// Strips the characters BepInEx refuses inside a config section name. Weather names carry spaces,
+    /// '+' and '&gt;' — all fine — but a modded one could contain anything.
+    /// </summary>
+    private static string SanitizeForConfig(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return "Unnamed";
+
+        var builder = new System.Text.StringBuilder(name.Length);
+        foreach (char c in name)
+        {
+            if (c == '=' || c == '\n' || c == '\t' || c == '\\' || c == '"' || c == '\'' || c == '[' || c == ']')
                 continue;
-
-            // Weather names contain '+' and '>' but never '@', so the LAST '@' separates name
-            // from weight and "Stormy + Rainy@40" parses the way it reads.
-            int at = entry.LastIndexOf('@');
-            if (at <= 0)
-            {
-                Plugin.Log.LogWarning($"[Weathers] Ignoring '{entry}': expected the form Name@Weight.");
-                continue;
-            }
-
-            string name = NormalizeName(entry.Substring(0, at));
-            string weightText = entry.Substring(at + 1).Trim();
-
-            if (name.Length == 0)
-            {
-                Plugin.Log.LogWarning($"[Weathers] Ignoring '{entry}': the weather name is empty.");
-                continue;
-            }
-
-            if (!int.TryParse(weightText, out int weight) || weight < 0)
-            {
-                Plugin.Log.LogWarning(
-                    $"[Weathers] Ignoring '{entry}': '{weightText}' is not a weight of 0 or more.");
-                continue;
-            }
-
-            parsed[name] = weight;
+            builder.Append(c);
         }
 
-        _weights = parsed;
-        _weightsSource = raw;
-        return parsed;
+        string cleaned = builder.ToString().Trim();
+        return cleaned.Length == 0 ? "Unnamed" : cleaned;
     }
 
     /// <summary>

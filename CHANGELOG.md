@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.1.0
+
+- **Every weather can now be switched off on its own.** Each registered weather gets its own
+  `[Weather.Name]` section with `Enabled` and `Weight`, matching how MonstersGordion handles enemies.
+  Turning one off takes it back out of Gordion's pool and touches nothing else — no other moon, no
+  other weather.
+- The single `Weather weights` line is gone. Setting a weight to 0 there already removed a weather,
+  but nothing about a semicolon-separated string said so, and there was no way to keep a weight
+  around while temporarily disabling it.
+- Rain, Fog, Stormy, Flooded and Eclipsed are on by default. Dust Clouds and every combination from
+  WeatherTweaks and Combined Weathers Toolkit are bound switched off, so installing a weather pack
+  does not quietly change what happens at the Company.
+- **Upgrading:** delete the old `Weather weights` line from the config. The new sections appear after
+  the next launch, once the weather list exists — the same timing as WeatherRegistry's own per-weather
+  sections.
+
 ## 1.0.5
 
 - Config sections renumbered `1. General`, `2. Weathers`, `3. Time`. The gap where a scrap section

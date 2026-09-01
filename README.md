@@ -4,7 +4,7 @@
 
 ![Lethal Company](https://img.shields.io/badge/Lethal%20Company-V81-cc0000?style=flat-square)
 ![BepInEx](https://img.shields.io/badge/BepInEx-5.4.21%2B-cc0000?style=flat-square)
-![Version](https://img.shields.io/badge/version-1.0.5-cc0000?style=flat-square)
+![Version](https://img.shields.io/badge/version-1.1.0-cc0000?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-cc0000?style=flat-square)
 
 **Language / Язык:** [English](#english) · [Русский](#russian)
@@ -19,8 +19,8 @@
 ### <span style="color: #cc0000;">WHAT IT DOES</span>
 
 - <strong style="color: #cc0000;">Weather at the Company</strong> — fills Gordion's empty weather pool and takes it out of the blacklist WeatherRegistry ships on every weather by default.
-- <strong style="color: #cc0000;">Per-weather weights</strong> — one config line decides what can happen there and how often: `Rainy@120; Foggy@100; Stormy@60`.
-- <strong style="color: #cc0000;">Combined and progressing weathers</strong> — anything registered by WeatherTweaks or Combined Weathers Toolkit works by name: `Stormy + Rainy@40`, `Eclipsed > Foggy@20`.
+- <strong style="color: #cc0000;">A switch and a weight per weather</strong> — every weather gets its own `[Weather.Name]` section with `Enabled` and `Weight`, so any of them can be turned off on Gordion without touching the rest.
+- <strong style="color: #cc0000;">Combined and progressing weathers</strong> — anything registered by WeatherTweaks or Combined Weathers Toolkit gets a section too, `[Weather.Stormy + Rainy]`, `[Weather.Eclipsed > Foggy]`, switched off until you want it.
 - <strong style="color: #cc0000;">A day that passes</strong> — Gordion has no day cycle in vanilla, which is why progressing weather cannot progress there. RealTime mode starts the game's own clock for the visit.
 - <strong style="color: #cc0000;">A working clock and an end of day</strong> — the HUD clock runs (indoors too, where vanilla hides it), and the ship can fly off at midnight like it does on any other moon. Both are optional.
 - <strong style="color: #cc0000;">Nothing else about the moon changes</strong> — `planetHasTime` is deliberately left alone, so selling still costs no deadline day, landing late is never refused, and no end-of-round stats screen appears.
@@ -84,7 +84,6 @@ Install through a mod manager, or drop `WeatherGordion.dll` into `BepInEx/plugin
 |---|---|---|---|
 | 1. General | `Enabled` | `true` | Master switch. |
 | 1. General | `DebugMode` | `false` | Logs every unlock, weight write and time transition. |
-| 2. Weathers | `Weather weights` | see below | `Name@Weight` pairs, semicolon separated. Weight 0 removes a weather this mod added. |
 | 2. Weathers | `Clear weather weight` | `200` | How often Gordion stays clear. 0 guarantees weather every visit. |
 | 2. Weathers | `Respect existing config` | `true` | Skip weathers you already gave a Gordion weight by hand. |
 | 3. Time | `Gordion time mode` | `RealTime` | `Off`, `RealTime` or `Simulated`. |
@@ -93,19 +92,23 @@ Install through a mod manager, or drop `WeatherGordion.dll` into `BepInEx/plugin
 | 3. Time | `Show clock on Gordion` | `true` | Show the HUD clock during the visit, indoors included. |
 | 3. Time | `Day length seconds` | `1200` | Simulated only: real seconds per Gordion day. |
 
-Default weather line:
+**Turning a weather on or off.** Every registered weather gets its own section, named after it:
 
-```
-Rainy@120; Foggy@100; Stormy@60; Flooded@40; Eclipsed@50
+```ini
+[Weather.Rainy]
+Enabled = true
+Weight = 120
+
+[Weather.Stormy + Rainy]
+Enabled = false
+Weight = 100
 ```
 
-Names are the ones WeatherRegistry uses for its config section titles, so combined weathers work the same way:
+`Enabled = false` takes that weather back out of Gordion's pool and changes nothing else — no other moon, no other weather. `Weight` is relative to the other weathers here and to `Clear weather weight`; it is ignored while `Enabled` is false.
 
-```
-Rainy@120; Stormy + Rainy@40; Eclipsed > Foggy@20
-```
+Rain, Fog, Stormy, Flooded and Eclipsed start switched on. Everything else — Dust Clouds, and every combination registered by WeatherTweaks or Combined Weathers Toolkit — is bound switched off, so installing a weather pack never quietly changes what happens at the Company. Turn on whichever ones you want.
 
-Weathers you list that are not registered are reported by name in the log on startup, so a typo is easy to spot.
+These sections appear only after the game has loaded far enough for the weather list to exist, the same way WeatherRegistry's own per-weather sections do. Launch once, then edit.
 
 **Time modes.** `RealTime` starts the game clock for the visit and is the mode that makes progressing weather and the rising Flooded water work. `Simulated` never touches the game clock at all — it writes the normalised time itself, draws the HUD clock by hand and steps weather stages on its own timer. Use it if RealTime ever upsets another mod. `Off` keeps Gordion timeless: weather is picked on landing and holds for the visit, which is enough for plain and combined weathers.
 
@@ -148,8 +151,8 @@ dotnet build -c Release
 ### <span style="color: #cc0000;">ЧТО ДЕЛАЕТ МОД</span>
 
 - <strong style="color: #cc0000;">Погода на Гордионе</strong> — заполняет пустой пул погод луны и убирает её из чёрного списка, который WeatherRegistry по умолчанию ставит каждой погоде.
-- <strong style="color: #cc0000;">Веса по каждой погоде</strong> — одна строка конфига решает, что и как часто там бывает: `Rainy@120; Foggy@100; Stormy@60`.
-- <strong style="color: #cc0000;">Комбинированные и прогрессирующие</strong> — всё, что зарегистрировали WeatherTweaks или Combined Weathers Toolkit, работает по имени: `Stormy + Rainy@40`, `Eclipsed > Foggy@20`.
+- <strong style="color: #cc0000;">Выключатель и вес у каждой погоды</strong> — у каждой своя секция `[Weather.Имя]` с `Enabled` и `Weight`, так что любую можно убрать с Гордиона, не трогая остальные.
+- <strong style="color: #cc0000;">Комбинированные и прогрессирующие</strong> — всё от WeatherTweaks и Combined Weathers Toolkit тоже получает свою секцию, `[Weather.Stormy + Rainy]`, `[Weather.Eclipsed > Foggy]`, выключенную до тех пор, пока не понадобится.
 - <strong style="color: #cc0000;">Идущее время</strong> — в ваниле на Гордионе нет смены суток, поэтому прогрессирующая погода там не может прогрессировать. Режим RealTime запускает штатные часы игры на время визита.
 - <strong style="color: #cc0000;">Рабочие часы и конец дня</strong> — часы в HUD идут (в том числе внутри здания, где ваниль их прячет), а корабль может улетать в полночь, как на любой другой луне. И то и другое отключаемо.
 - <strong style="color: #cc0000;">Больше на луне ничего не меняется</strong> — `planetHasTime` сознательно не трогается: продажа не съедает день дедлайна, посадку поздним вечером не запрещают, экран итогов дня не появляется.
@@ -213,7 +216,6 @@ dotnet build -c Release
 |---|---|---|---|
 | 1. General | `Enabled` | `true` | Общий выключатель. |
 | 1. General | `DebugMode` | `false` | Логирует каждую разблокировку, запись веса и переход времени. |
-| 2. Weathers | `Weather weights` | см. ниже | Пары `Имя@Вес` через точку с запятой. Вес 0 убирает погоду, добавленную этим модом. |
 | 2. Weathers | `Clear weather weight` | `200` | Как часто на Гордионе остаётся ясно. 0 — погода гарантирована каждый визит. |
 | 2. Weathers | `Respect existing config` | `true` | Не трогать погоды, которым вы уже задали вес для Гордиона вручную. |
 | 3. Time | `Gordion time mode` | `RealTime` | `Off`, `RealTime` или `Simulated`. |
@@ -222,19 +224,23 @@ dotnet build -c Release
 | 3. Time | `Show clock on Gordion` | `true` | Показывать часы в HUD во время визита, в том числе в помещении. |
 | 3. Time | `Day length seconds` | `1200` | Только Simulated: реальных секунд на сутки Гордиона. |
 
-Строка погод по умолчанию:
+**Как включить или убрать погоду.** У каждой зарегистрированной погоды своя секция, названная по ней:
 
-```
-Rainy@120; Foggy@100; Stormy@60; Flooded@40; Eclipsed@50
+```ini
+[Weather.Rainy]
+Enabled = true
+Weight = 120
+
+[Weather.Stormy + Rainy]
+Enabled = false
+Weight = 100
 ```
 
-Имена — те же, что в заголовках секций `mrov.WeatherRegistry.cfg`, поэтому комбинированные пишутся так же:
+`Enabled = false` убирает эту погоду из пула Гордиона и больше не меняет ничего — ни другие луны, ни другие погоды. `Weight` задаёт вероятность относительно остальных погод здесь же и относительно `Clear weather weight`; при выключенном `Enabled` он не используется.
 
-```
-Rainy@120; Stormy + Rainy@40; Eclipsed > Foggy@20
-```
+Дождь, туман, гроза, потоп и затмение включены сразу. Всё остальное — пыльные облака и любые комбинации от WeatherTweaks или Combined Weathers Toolkit — создаётся выключенным, чтобы установка погодного пака не меняла молча происходящее на Компании. Включайте то, что нужно.
 
-Погоды, которых нет в реестре, перечисляются по именам в логе при запуске — опечатку видно сразу.
+Секции появляются только после того, как игра догрузится до момента, когда список погод существует, — ровно как и собственные посекционные настройки WeatherRegistry. Запустите игру один раз, потом правьте.
 
 **Режимы времени.** `RealTime` запускает игровые часы на визит: именно в нём работают прогрессирующая погода и подъём воды у Flooded. `Simulated` вообще не трогает игровые часы — сам пишет нормализованное время, сам рисует часы в HUD и сам переключает стадии по своему таймеру; пригодится, если RealTime когда-нибудь поссорится с другим модом. `Off` оставляет Гордион вне времени: погода выбирается при посадке и держится весь визит — этого достаточно для обычных и комбинированных погод.
 

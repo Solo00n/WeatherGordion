@@ -5,7 +5,7 @@
     <AssemblyName>WeatherGordion</AssemblyName>
     <RootNamespace>WeatherGordion</RootNamespace>
     <Product>WeatherGordion</Product>
-    <Version>1.0.5</Version>
+    <Version>1.1.0</Version>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -13,7 +13,7 @@
     <!-- BepInEx.PluginInfoProps generates MyPluginInfo from these -->
     <BepInExPluginGuid>Timofey.WeatherGordion</BepInExPluginGuid>
     <BepInExPluginName>WeatherGordion</BepInExPluginName>
-    <BepInExPluginVersion>1.0.5</BepInExPluginVersion>
+    <BepInExPluginVersion>1.1.0</BepInExPluginVersion>
   </PropertyGroup>
 
   <!-- Thunderstore profile the mod is developed against. Every hard-referenced
