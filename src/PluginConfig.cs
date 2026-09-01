@@ -68,6 +68,10 @@ internal sealed class PluginConfig
     // [Weathers]
     public readonly ConfigEntry<int> ClearWeatherWeight;
     public readonly ConfigEntry<bool> RespectExistingConfig;
+    public readonly ConfigEntry<string> BannedComponents;
+
+    private HashSet<string> _banned;
+    private string _bannedSource;
 
     // [Time]
     public readonly ConfigEntry<GordionTimeMode> TimeMode;
@@ -94,6 +98,15 @@ internal sealed class PluginConfig
                 "Weight of clear weather (None) on Gordion, i.e. how often the moon stays as it is in " +
                 "vanilla. Set to 0 to guarantee some weather on every visit.",
                 new AcceptableValueRange<int>(0, 10000)));
+
+        BannedComponents = cfg.Bind(
+            "2. Weathers", "Never allow, even in combinations", "",
+            "Semicolon-separated weathers that must never occur on Gordion, including as part of a " +
+            "combined or progressing weather. This is stronger than switching a weather off in its own " +
+            "section: '[Weather.Rainy] Enabled = false' only removes plain rain, while 'Stormy + Rainy' " +
+            "is a separate weather that turns the rain on as well. Listing 'Rainy' here refuses both, " +
+            "and every other combination containing rain. Written for exactly that case — rain's " +
+            "puddles do not render correctly at the Company. Example: Rainy; Flooded");
 
         RespectExistingConfig = cfg.Bind(
             "2. Weathers", "Respect existing config", true,
@@ -141,6 +154,26 @@ internal sealed class PluginConfig
                 "Simulated only: real seconds for a full Gordion day, i.e. how long progressing weather " +
                 "takes to run through all of its stages.",
                 new AcceptableValueRange<float>(60f, 7200f)));
+    }
+
+    /// <summary>Normalised names from <see cref="BannedComponents"/>, rebuilt when the string changes.</summary>
+    public HashSet<string> BannedComponentNames()
+    {
+        string raw = BannedComponents.Value ?? string.Empty;
+        if (_banned != null && _bannedSource == raw)
+            return _banned;
+
+        var parsed = new HashSet<string>(StringComparer.Ordinal);
+        foreach (string chunk in raw.Split(';'))
+        {
+            string name = NormalizeName(chunk);
+            if (name.Length > 0)
+                parsed.Add(name);
+        }
+
+        _banned = parsed;
+        _bannedSource = raw;
+        return parsed;
     }
 
     /// <summary>

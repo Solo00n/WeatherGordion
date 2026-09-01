@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.0
+
+- **New: `Never allow, even in combinations`.** Switching off `[Weather.Rainy]` only removes plain
+  rain — "Stormy + Rainy" is a separate weather with its own section that turns the rain on as well,
+  and so are "Foggy + Rainy", "Eclipsed + Rainy" and the rest. Listing a weather here refuses it
+  everywhere it can appear, by reading what each combination is actually made of rather than trusting
+  its name. Written for rain specifically: its puddles do not render correctly at the Company, and
+  they arrive with any combination containing it.
+- Components are read from WeatherTweaks' `WeatherTypes`, with the weather's own name split on `+`
+  and `>` as a fallback, so the ban still holds if WeatherTweaks is absent or its types have moved.
+
 ## 1.1.0
 
 - **Every weather can now be switched off on its own.** Each registered weather gets its own

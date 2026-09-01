@@ -4,7 +4,7 @@
 
 ![Lethal Company](https://img.shields.io/badge/Lethal%20Company-V81-cc0000?style=flat-square)
 ![BepInEx](https://img.shields.io/badge/BepInEx-5.4.21%2B-cc0000?style=flat-square)
-![Version](https://img.shields.io/badge/version-1.1.0-cc0000?style=flat-square)
+![Version](https://img.shields.io/badge/version-1.2.0-cc0000?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-cc0000?style=flat-square)
 
 **Language / Язык:** [English](#english) · [Русский](#russian)
@@ -85,6 +85,7 @@ Install through a mod manager, or drop `WeatherGordion.dll` into `BepInEx/plugin
 | 1. General | `Enabled` | `true` | Master switch. |
 | 1. General | `DebugMode` | `false` | Logs every unlock, weight write and time transition. |
 | 2. Weathers | `Clear weather weight` | `200` | How often Gordion stays clear. 0 guarantees weather every visit. |
+| 2. Weathers | `Never allow, even in combinations` | empty | Weathers refused outright, including as part of a combined one. |
 | 2. Weathers | `Respect existing config` | `true` | Skip weathers you already gave a Gordion weight by hand. |
 | 3. Time | `Gordion time mode` | `RealTime` | `Off`, `RealTime` or `Simulated`. |
 | 3. Time | `Freeze deadline on Gordion` | `true` | Hold the quota deadline still while the clock runs. |
@@ -109,6 +110,15 @@ Weight = 100
 Rain, Fog, Stormy, Flooded and Eclipsed start switched on. Everything else — Dust Clouds, and every combination registered by WeatherTweaks or Combined Weathers Toolkit — is bound switched off, so installing a weather pack never quietly changes what happens at the Company. Turn on whichever ones you want.
 
 These sections appear only after the game has loaded far enough for the weather list to exist, the same way WeatherRegistry's own per-weather sections do. Launch once, then edit.
+
+**Refusing a weather everywhere it can appear.** Switching off `[Weather.Rainy]` removes plain rain and nothing else — "Stormy + Rainy" is a *different* weather that happens to turn the rain on as well, with its own section. When a weather has to be gone completely, list it under `Never allow, even in combinations`:
+
+```ini
+[2. Weathers]
+Never allow, even in combinations = Rainy
+```
+
+That refuses plain rain, "Stormy + Rainy", "Foggy + Rainy", "Eclipsed + Rainy" and every other combination containing it. The setting exists for exactly this case: rain's puddles do not render correctly at the Company, and they come along with any combination that includes rain. Semicolon-separated if you need more than one.
 
 **Time modes.** `RealTime` starts the game clock for the visit and is the mode that makes progressing weather and the rising Flooded water work. `Simulated` never touches the game clock at all — it writes the normalised time itself, draws the HUD clock by hand and steps weather stages on its own timer. Use it if RealTime ever upsets another mod. `Off` keeps Gordion timeless: weather is picked on landing and holds for the visit, which is enough for plain and combined weathers.
 
@@ -217,6 +227,7 @@ dotnet build -c Release
 | 1. General | `Enabled` | `true` | Общий выключатель. |
 | 1. General | `DebugMode` | `false` | Логирует каждую разблокировку, запись веса и переход времени. |
 | 2. Weathers | `Clear weather weight` | `200` | Как часто на Гордионе остаётся ясно. 0 — погода гарантирована каждый визит. |
+| 2. Weathers | `Never allow, even in combinations` | пусто | Погоды, запрещённые полностью, в том числе в составе комбинированных. |
 | 2. Weathers | `Respect existing config` | `true` | Не трогать погоды, которым вы уже задали вес для Гордиона вручную. |
 | 3. Time | `Gordion time mode` | `RealTime` | `Off`, `RealTime` или `Simulated`. |
 | 3. Time | `Freeze deadline on Gordion` | `true` | Удерживать дедлайн квоты, пока идут часы. |
@@ -241,6 +252,15 @@ Weight = 100
 Дождь, туман, гроза, потоп и затмение включены сразу. Всё остальное — пыльные облака и любые комбинации от WeatherTweaks или Combined Weathers Toolkit — создаётся выключенным, чтобы установка погодного пака не меняла молча происходящее на Компании. Включайте то, что нужно.
 
 Секции появляются только после того, как игра догрузится до момента, когда список погод существует, — ровно как и собственные посекционные настройки WeatherRegistry. Запустите игру один раз, потом правьте.
+
+**Как запретить погоду везде, где она может появиться.** Выключенная `[Weather.Rainy]` убирает только чистый дождь — «Stormy + Rainy» это *другая* погода со своей секцией, которая просто включает дождь заодно. Если погода должна исчезнуть совсем, впишите её в `Never allow, even in combinations`:
+
+```ini
+[2. Weathers]
+Never allow, even in combinations = Rainy
+```
+
+Это запрещает и чистый дождь, и «Stormy + Rainy», и «Foggy + Rainy», и «Eclipsed + Rainy», и любую другую комбинацию с ним. Настройка сделана ровно под этот случай: лужи дождя на Компании отрисовываются неправильно, а тянутся они за любой комбинацией, где дождь есть. Несколько погод — через точку с запятой.
 
 **Режимы времени.** `RealTime` запускает игровые часы на визит: именно в нём работают прогрессирующая погода и подъём воды у Flooded. `Simulated` вообще не трогает игровые часы — сам пишет нормализованное время, сам рисует часы в HUD и сам переключает стадии по своему таймеру; пригодится, если RealTime когда-нибудь поссорится с другим модом. `Off` оставляет Гордион вне времени: погода выбирается при посадке и держится весь визит — этого достаточно для обычных и комбинированных погод.
 

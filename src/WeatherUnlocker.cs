@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BepInEx.Configuration;
+using WeatherGordion.Compat;
 using WeatherRegistry;
 using WeatherRegistry.Enums;
 
@@ -130,6 +131,7 @@ internal static class WeatherUnlocker
 
         var applied = new List<string>();
         var disabled = new List<string>();
+        var banned = new List<string>();
 
         foreach (Weather weather in weathers)
         {
@@ -145,6 +147,15 @@ internal static class WeatherUnlocker
             }
 
             int weight = Plugin.Cfg.SettingsFor(weather.Name).EffectiveWeight;
+
+            // A ban outranks the weather's own switch: it exists precisely to catch the combinations
+            // whose sections still say Enabled, because they were never the thing being turned off.
+            if (IsBanned(weather))
+            {
+                RemoveFromPool(gordion, weather);
+                banned.Add(weather.Name);
+                continue;
+            }
 
             if (weight == 0)
             {
@@ -175,9 +186,46 @@ internal static class WeatherUnlocker
                 $"Gordion weather pool ({reason}): {(applied.Count > 0 ? string.Join(", ", applied) : "nothing")}" +
                 $"; clear weight {Plugin.Cfg.ClearWeatherWeight.Value}.");
 
+            // Logged at info, not debug: a weather whose own section still says Enabled but which never
+            // shows up is exactly the thing worth being able to explain without turning on debugging.
+            if (banned.Count > 0)
+                Plugin.Log.LogInfo(
+                    $"Refused by 'Never allow, even in combinations' ({Plugin.Cfg.BannedComponents.Value}): " +
+                    $"{string.Join(", ", banned)}.");
+
             if (disabled.Count > 0)
                 Plugin.DebugLog($"Switched off for Gordion: {string.Join(", ", disabled)}.");
         }
+    }
+
+    /// <summary>
+    /// True when the weather is one the config refuses outright, or is built from one.
+    ///
+    /// A combination is its own weather with its own name, so switching <c>[Weather.Rainy]</c> off says
+    /// nothing about "Stormy + Rainy" — that one turns the rain on too. Checking the components is what
+    /// makes a ban hold everywhere the weather can appear.
+    /// </summary>
+    private static bool IsBanned(Weather weather)
+    {
+        HashSet<string> banned = Plugin.Cfg.BannedComponentNames();
+        if (banned.Count == 0)
+            return false;
+
+        foreach (LevelWeatherType component in WeatherTweaksCompat.GetComponents(weather))
+        {
+            if (banned.Contains(PluginConfig.NormalizeName(component.ToString())))
+                return true;
+        }
+
+        // Last resort for a weather whose parts cannot be read: match the words in its own name, so
+        // "Stormy + Rainy" is still caught when WeatherTweaks is absent or has moved its types.
+        foreach (string part in (weather.Name ?? string.Empty).Split('+', '>'))
+        {
+            if (banned.Contains(PluginConfig.NormalizeName(part)))
+                return true;
+        }
+
+        return false;
     }
 
     // ---------------------------------------------------------------- level filter

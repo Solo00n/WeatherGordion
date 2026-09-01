@@ -31,6 +31,7 @@ internal static class WeatherTweaksCompat
     private static FieldInfo _weatherEntries;        // ProgressingWeatherType.WeatherEntries
     private static FieldInfo _entryDayTime;          // ProgressingWeatherEntry.DayTime
     private static MethodInfo _entryGetWeather;      // ProgressingWeatherEntry.GetWeather()
+    private static PropertyInfo _weatherTypes;       // WeatherTweaksWeather.WeatherTypes
 
     /// <summary>True when WeatherTweaks is loaded and its progressing-weather types were found.</summary>
     public static bool Available
@@ -90,6 +91,48 @@ internal static class WeatherTweaksCompat
         return stages;
     }
 
+    /// <summary>
+    /// The weathers <paramref name="weather"/> is made of, as they would be applied on the moon.
+    ///
+    /// A combination is its own <c>Weather</c> object with its own name, so switching off
+    /// <c>[Weather.Rainy]</c> says nothing about "Stormy + Rainy" — that is a different weather that
+    /// happens to turn the rain on as well. This is what lets a component be refused wherever it
+    /// appears. A weather that is not a WeatherTweaks combination reports only itself.
+    /// </summary>
+    public static List<LevelWeatherType> GetComponents(Weather weather)
+    {
+        var parts = new List<LevelWeatherType>();
+        if (weather == null)
+            return parts;
+
+        parts.Add(weather.VanillaWeatherType);
+
+        if (!Available)
+            return parts;
+
+        try
+        {
+            object full = _getFullWeatherType.Invoke(null, new object[] { weather });
+            if (full == null || _weatherTypes == null)
+                return parts;
+
+            if (!(_weatherTypes.GetValue(full) is IEnumerable resolvables))
+                return parts;
+
+            foreach (object item in resolvables)
+            {
+                if (item is WeatherResolvable resolvable)
+                    parts.Add(resolvable.WeatherType);
+            }
+        }
+        catch (Exception e)
+        {
+            Plugin.DebugLog($"Could not read the components of '{weather.Name}': {e.Message}");
+        }
+
+        return parts;
+    }
+
     private static void Probe()
     {
         if (_probed)
@@ -101,6 +144,9 @@ internal static class WeatherTweaksCompat
             Type variables = FindType("WeatherTweaks.Variables");
             _progressingType = FindType("WeatherTweaks.Definitions.ProgressingWeatherType");
             Type entryType = FindType("WeatherTweaks.Definitions.ProgressingWeatherEntry");
+            Type tweaksWeather = FindType("WeatherTweaks.Definitions.WeatherTweaksWeather");
+            _weatherTypes = tweaksWeather?.GetProperty(
+                "WeatherTypes", BindingFlags.Public | BindingFlags.Instance);
 
             if (variables == null || _progressingType == null || entryType == null)
             {
