@@ -42,6 +42,9 @@ internal static class WeatherUnlocker
     /// </summary>
     private static readonly HashSet<string> PreExistingWeights = new HashSet<string>(StringComparer.Ordinal);
 
+    /// <summary>Weathers whose composition has already been logged, so debug output stays readable.</summary>
+    private static readonly HashSet<string> _loggedComponents = new HashSet<string>(StringComparer.Ordinal);
+
     private static bool _snapshotTaken;
     private static bool _subscribed;
     private static bool _loggedSummary;
@@ -92,6 +95,7 @@ internal static class WeatherUnlocker
     {
         Added.Clear();
         WeatherVariables.Reset();
+        _loggedComponents.Clear();
         _loggedSummary = false;
     }
 
@@ -211,15 +215,39 @@ internal static class WeatherUnlocker
         if (banned.Count == 0)
             return false;
 
-        foreach (LevelWeatherType component in WeatherTweaksCompat.GetComponents(weather))
+        List<string> components = WeatherTweaksCompat.GetComponentNames(weather);
+
+        // Worth seeing when a weather that should have been caught was not: this is the list the ban
+        // was tested against, so an empty or surprising one points straight at the cause.
+        if (Plugin.Cfg.DebugMode.Value && !_loggedComponents.Contains(weather.Name ?? string.Empty))
         {
-            if (banned.Contains(PluginConfig.NormalizeName(component.ToString())))
+            _loggedComponents.Add(weather.Name ?? string.Empty);
+            Plugin.DebugLog($"'{weather.Name}' is made of: {string.Join(", ", components.Distinct())}.");
+        }
+
+        // What the weather is actually made of. This is the check that matters: a Toolkit combination
+        // called "The Great Flood" says nothing in its name about the rain inside it.
+        foreach (string component in components)
+        {
+            if (banned.Contains(PluginConfig.NormalizeName(component)))
+                return true;
+
+            // A component may itself be spelled as a combination.
+            if (MatchesAnyPart(component, banned))
                 return true;
         }
 
-        // Last resort for a weather whose parts cannot be read: match the words in its own name, so
-        // "Stormy + Rainy" is still caught when WeatherTweaks is absent or has moved its types.
-        foreach (string part in (weather.Name ?? string.Empty).Split('+', '>'))
+        // Last resort when the parts cannot be read at all — WeatherTweaks absent, or its types moved.
+        return MatchesAnyPart(weather.Name, banned);
+    }
+
+    /// <summary>Splits a combination's name on its separators and tests each piece against the ban.</summary>
+    private static bool MatchesAnyPart(string name, HashSet<string> banned)
+    {
+        if (string.IsNullOrEmpty(name))
+            return false;
+
+        foreach (string part in name.Split('+', '>', ','))
         {
             if (banned.Contains(PluginConfig.NormalizeName(part)))
                 return true;

@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.2.1
+
+- The ban now reads a combination's components straight off the weather object. A combination *is* a
+  `WeatherTweaksWeather`, so its `WeatherTypes` is right there; going through
+  `Variables.GetFullWeatherType` first added a lookup that could come back empty and silently cost the
+  component list — and with it the only way to catch a combination whose name says nothing about what
+  is inside it, like Combined Weathers Toolkit's "The Great Flood".
+- Each component is matched by both its weather type and its name, and a component that is itself
+  written as a combination is split again, so nothing slips through on spelling.
+- With `DebugMode` on, each weather logs what it was found to be made of — the list the ban was
+  actually tested against, which is what you need to see if something was expected to be caught and
+  was not.
+
 ## 1.2.0
 
 - **New: `Never allow, even in combinations`.** Switching off `[Weather.Rainy]` only removes plain

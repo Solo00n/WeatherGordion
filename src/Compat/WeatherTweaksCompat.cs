@@ -99,38 +99,105 @@ internal static class WeatherTweaksCompat
     /// happens to turn the rain on as well. This is what lets a component be refused wherever it
     /// appears. A weather that is not a WeatherTweaks combination reports only itself.
     /// </summary>
-    public static List<LevelWeatherType> GetComponents(Weather weather)
+    public static List<string> GetComponentNames(Weather weather)
     {
-        var parts = new List<LevelWeatherType>();
+        var parts = new List<string>();
         if (weather == null)
             return parts;
 
-        parts.Add(weather.VanillaWeatherType);
+        parts.Add(weather.VanillaWeatherType.ToString());
+        parts.Add(weather.Name);
 
-        if (!Available)
-            return parts;
-
-        try
+        foreach (WeatherResolvable resolvable in ReadResolvables(weather))
         {
-            object full = _getFullWeatherType.Invoke(null, new object[] { weather });
-            if (full == null || _weatherTypes == null)
-                return parts;
-
-            if (!(_weatherTypes.GetValue(full) is IEnumerable resolvables))
-                return parts;
-
-            foreach (object item in resolvables)
+            // Both spellings: a resolvable may carry a name that never resolved to a type, and a type
+            // whose name was never set. Either one is enough to recognise the component.
+            try
             {
-                if (item is WeatherResolvable resolvable)
-                    parts.Add(resolvable.WeatherType);
+                parts.Add(resolvable.WeatherType.ToString());
             }
-        }
-        catch (Exception e)
-        {
-            Plugin.DebugLog($"Could not read the components of '{weather.Name}': {e.Message}");
+            catch
+            {
+                // An unresolvable entry still has its name below.
+            }
+
+            try
+            {
+                if (!string.IsNullOrEmpty(resolvable.WeatherName))
+                    parts.Add(resolvable.WeatherName);
+            }
+            catch
+            {
+                // Nothing more to read from this one.
+            }
         }
 
         return parts;
+    }
+
+    /// <summary>
+    /// The component list of a WeatherTweaks weather.
+    ///
+    /// Read straight off the object where possible: a combination *is* a
+    /// <c>WeatherTweaksWeather</c>, which derives from <c>WeatherRegistry.Weather</c>, so the property
+    /// is right there. Going through <c>Variables.GetFullWeatherType</c> would add a lookup that can
+    /// come back empty and quietly cost us the components — and with them the only way to recognise a
+    /// combination like "The Great Flood", whose name says nothing about the rain inside it.
+    /// </summary>
+    private static IEnumerable<WeatherResolvable> ReadResolvables(Weather weather)
+    {
+        if (!Available)
+            yield break;
+
+        object source = null;
+
+        PropertyInfo direct = weather.GetType().GetProperty(
+            "WeatherTypes", BindingFlags.Public | BindingFlags.Instance);
+        if (direct != null)
+        {
+            source = SafeGet(direct, weather);
+        }
+        else if (_getFullWeatherType != null && _weatherTypes != null)
+        {
+            object full = SafeInvoke(_getFullWeatherType, new object[] { weather });
+            if (full != null)
+                source = SafeGet(_weatherTypes, full);
+        }
+
+        if (!(source is IEnumerable items))
+            yield break;
+
+        foreach (object item in items)
+        {
+            if (item is WeatherResolvable resolvable)
+                yield return resolvable;
+        }
+    }
+
+    private static object SafeGet(PropertyInfo property, object target)
+    {
+        try
+        {
+            return property.GetValue(target);
+        }
+        catch (Exception e)
+        {
+            Plugin.DebugLog($"Reading {property.Name} failed: {e.Message}");
+            return null;
+        }
+    }
+
+    private static object SafeInvoke(MethodInfo method, object[] args)
+    {
+        try
+        {
+            return method.Invoke(null, args);
+        }
+        catch (Exception e)
+        {
+            Plugin.DebugLog($"Calling {method.Name} failed: {e.Message}");
+            return null;
+        }
     }
 
     private static void Probe()

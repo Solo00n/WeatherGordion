@@ -4,7 +4,7 @@
 
 ![Lethal Company](https://img.shields.io/badge/Lethal%20Company-V81-cc0000?style=flat-square)
 ![BepInEx](https://img.shields.io/badge/BepInEx-5.4.21%2B-cc0000?style=flat-square)
-![Version](https://img.shields.io/badge/version-1.2.0-cc0000?style=flat-square)
+![Version](https://img.shields.io/badge/version-1.2.1-cc0000?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-cc0000?style=flat-square)
 
 **Language / Язык:** [English](#english) · [Русский](#russian)
